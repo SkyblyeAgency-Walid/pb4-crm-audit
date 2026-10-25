@@ -1,0 +1,8 @@
+.clasp.json
+.clasprc.json
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+*.token
+*.env

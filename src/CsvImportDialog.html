@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!-- =====================================================================
+  PB4 — CRM HEALTH AUDIT · CsvImportDialog.html
+  Client side of CSV mode: reads the customer's CRM export locally and
+  passes the text to the server. The file never leaves Google's servers.
+====================================================================== -->
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body   { font-family: Arial, sans-serif; font-size: 13px; color: #0f172a; margin: 14px; }
+      h3     { margin: 0 0 6px 0; }
+      p      { color: #64748b; margin: 4px 0 12px 0; line-height: 1.4; }
+      input  { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+      #status{ margin-top: 12px; padding: 10px; border-radius: 6px; background: #f1f5f9;
+               min-height: 18px; white-space: pre-wrap; display: none; }
+      #close { margin-top: 12px; padding: 7px 18px; border: 0; border-radius: 6px;
+               background: #0f172a; color: #fff; cursor: pointer; }
+      .spin  { display: inline-block; width: 14px; height: 14px; border: 2px solid #cbd5e1;
+               border-top-color: #0f172a; border-radius: 50%; animation: s 0.8s linear infinite;
+               vertical-align: -2px; margin-right: 6px; }
+      @keyframes s { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <h3>Import a CRM CSV export</h3>
+    <p>
+      Works with Pipedrive, Salesforce, Zoho, HubSpot or any CRM export that
+      has columns like email, first/last name, phone, company, created date,
+      last activity. Nothing is sent anywhere except this spreadsheet.
+    </p>
+    <input type="file" id="file" accept=".csv,text/csv,text/plain" />
+    <div id="status"></div>
+    <button id="close" onclick="google.script.host.close()">Close</button>
+
+    <script>
+      var box = document.getElementById('status');
+      var input = document.getElementById('file');
+
+      input.addEventListener('change', function (e) {
+        var f = e.target.files[0];
+        if (!f) return;
+        box.style.display = 'block';
+        box.innerHTML = '<span class="spin"></span>Parsing ' + escapeHtml_(f.name) + ' …';
+
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          google.script.run
+            .withSuccessHandler(onDone)
+            .withFailureHandler(onErr)
+            .importAuditCsvFromText(ev.target.result);
+        };
+        reader.onerror = function () {
+          box.textContent = 'Could not read the file locally. Try exporting it again as CSV.';
+        };
+        reader.readAsText(f);
+      });
+
+      function onDone(msg) {
+        box.textContent = '✔ ' + msg;
+      }
+      function onErr(err) {
+        box.textContent = '✘ ' + (err && err.message ? err.message : 'Import failed.');
+      }
+      function escapeHtml_(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+      }
+    </script>
+  </body>
+</html>
